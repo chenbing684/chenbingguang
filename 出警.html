@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a1c33">
+    <link rel="manifest" href='data:application/manifest+json,{"name":"消防出警生成器","short_name":"出警生成","start_url":".","display":"standalone","background_color":"%230a1c33","theme_color":"%230a1c33","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23e83b3b%22/%3E%3Ctext x=%2250%22 y=%2268%22 font-size=%2250%22 text-anchor=%22middle%22 fill=%22white%22%3E%F0%9F%9A%92%3C/text%3E%3C/svg%3E","sizes":"any","type":"image/svg+xml"}]}'>
+    <link rel="apple-touch-icon" href='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23e83b3b%22/%3E%3Ctext x=%2250%22 y=%2268%22 font-size=%2250%22 text-anchor=%22middle%22 fill=%22white%22%3E%F0%9F%9A%92%3C/text%3E%3C/svg%3E'>
+    <title>消防出警信息生成器</title>
+    <style>
+        :root {
+            --bg: #0a1c33;
+            --bg2: #0f2744;
+            --card: #143054;
+            --card2: #1a3a63;
+            --border: #24466e;
+            --border2: #2f5585;
+            --text: #eaf2fb;
+            --text-sub: #9cb3cc;
+            --text-dim: #6480a0;
+            --red: #ff4d5e;
+            --red2: #e63946;
+            --red-grad: linear-gradient(135deg, #ff5a4e, #e63946);
+            --gold: #f5b942;
+            --gold-grad: linear-gradient(135deg, #ffce6b, #f0a832);
+            --green: #2ecc71;
+            --radius: 16px;
+            --radius-sm: 11px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: radial-gradient(1200px 500px at 50% -80px, #1a3a63 0%, var(--bg) 60%);
+            color: var(--text);
+            padding-bottom: 108px;
+            font-size: 14px;
+            min-height: 100vh;
+        }
+
+        /* 顶部品牌栏 */
+        .header {
+            position: relative;
+            background: linear-gradient(160deg, #1a3a63 0%, #0f2744 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 22px 16px 18px;
+            text-align: center;
+            overflow: hidden;
+        }
+        .header::before {
+            content: "";
+            position: absolute;
+            top: -40px; left: 50%;
+            width: 260px; height: 260px;
+            transform: translateX(-50%);
+            background: radial-gradient(circle, rgba(255,77,94,0.22) 0%, transparent 68%);
+            pointer-events: none;
+        }
+        .header .logo {
+            width: 46px; height: 46px;
+            margin: 0 auto 10px;
+            border-radius: 14px;
+            background: var(--red-grad);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 6px 20px rgba(230,57,70,0.45);
+        }
+        .header h1 {
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, #ffd0d4, #fff 40%, #ff8a92);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .header p { font-size: 12px; color: var(--text-dim); margin-top: 4px; letter-spacing: 0.3px; }
+
+        /* 模版切换 */
+        .template-tab {
+            display: flex;
+            margin: 14px 16px 4px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 4px;
+            gap: 4px;
+        }
+        .tab-item {
+            flex: 1;
+            text-align: center;
+            padding: 11px 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-sub);
+            border-radius: 11px;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+        .tab-item.active {
+            background: var(--red-grad);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(230,57,70,0.4);
+        }
+
+        .container { margin: 10px 16px 0; }
+
+        /* 卡片 */
+        .card {
+            background: linear-gradient(180deg, var(--card) 0%, var(--card2) 100%);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.28);
+        }
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 13px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .card-title .tt {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-title .ico {
+            width: 24px; height: 24px;
+            border-radius: 7px;
+            background: rgba(255,77,94,0.14);
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 13px;
+        }
+        .card-title .edit-btn {
+            font-size: 12px;
+            color: var(--gold);
+            font-weight: 600;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(245,185,66,0.3);
+            background: rgba(245,185,66,0.08);
+            transition: all 0.2s;
+        }
+        .card-title .edit-btn:active { background: rgba(245,185,66,0.18); }
+
+        /* 警情 pill */
+        .alarm-select { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+        .alarm-item {
+            padding: 9px 16px;
+            border: 1px solid var(--border2);
+            background: var(--card2);
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .alarm-item.active {
+            background: var(--red-grad);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(230,57,70,0.4);
+        }
+        .alarm-op { display: flex; gap: 8px; align-items: center; }
+        .alarm-op input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid var(--border2);
+            background: var(--bg2);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--text);
+            outline: none;
+        }
+        .alarm-op input:focus { border-color: var(--red); }
+        .alarm-op input::placeholder { color: var(--text-dim); }
+        .alarm-op button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: var(--red-grad);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .alarm-op button.danger { background: #3a2630; color: #ff8a8a; border: 1px solid #5a3038; }
+        .location-row { margin-top: 10px; }
+        .location-row input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 11px 13px;
+            background: var(--bg2);
+            border: 1px solid var(--border2);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 14px;
+        }
+        .location-row input:focus { border-color: var(--red); outline: none; }
+
+        /* 实时统计条 */
+        .station-bar {
+            position: relative;
+            background: var(--gold-grad);
+            color: #241a05;
+            padding: 15px 14px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 12px;
+            letter-spacing: 0.3px;
+            box-shadow: 0 6px 18px rgba(245,185,66,0.28);
+            overflow: hidden;
+        }
+        .station-bar small {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(36,26,5,0.65);
+            margin-top: 3px;
+            letter-spacing: 1px;
+        }
+
+        /* 表单行 */
+        .form-row { margin-bottom: 12px; }
+        .row-edit {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 7px;
+        }
+        .row-edit label {
+            font-size: 13px;
+            color: var(--text-sub);
+            font-weight: 600;
+        }
+        .row-edit .edit-btn {
+            font-size: 12px;
+            color: var(--gold);
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .toggle-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .toggle-label input[type="checkbox"] {
+            width: 18px; height: 18px;
+            accent-color: var(--red);
+            cursor: pointer;
+            margin: 0;
+        }
+        .form-row.select-off select {
+            opacity: 0.35;
+            pointer-events: none;
+        }
+        .form-row select, .form-row input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid var(--border2);
+            background: var(--bg2);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            color: var(--text);
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2393a1b2' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 34px;
+        }
+        .form-row select:focus, .form-row input:focus { border-color: var(--red); }
+
+        /* 复选框胶囊 */
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px; }
+        .checkbox-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 13px;
+            border: 1px solid var(--border2);
+            background: var(--card2);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--text);
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.18s;
+        }
+        .checkbox-item::before {
+            content: "";
+            width: 9px; height: 9px;
+            border-radius: 50%;
+            border: 1.5px solid var(--text-dim);
+            transition: all 0.18s;
+            flex: 0 0 auto;
+        }
+        .checkbox-item.checked {
+            background: linear-gradient(135deg, rgba(255,77,94,0.16), rgba(230,57,70,0.10));
+            border-color: var(--red);
+            color: #ffb9bf;
+            font-weight: 600;
+        }
+        .checkbox-item.checked::before {
+            background: var(--red);
+            border-color: var(--red);
+            box-shadow: 0 0 0 3px rgba(255,77,94,0.18);
+        }
+        .checkbox-item.disabled {
+            opacity: 0.35;
+            pointer-events: none;
+            text-decoration: line-through;
+            filter: grayscale(0.6);
+        }
+        .checkbox-item input { display: none; }
+
+        /* 操作按钮 */
+        .op-row { display: flex; gap: 8px; margin-bottom: 11px; }
+        .op-row button:last-child { display: none; }
+        .op-row button {
+            flex: 1;
+            padding: 8px 0;
+            border: 1px solid var(--border2);
+            background: var(--bg2);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text-sub);
+            transition: all 0.2s;
+        }
+        .op-row button:active { background: var(--border2); color: var(--text); }
+
+        /* 车辆两栏 */
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .col-label { font-size: 12px; color: var(--text-dim); margin-bottom: 8px; font-weight: 600; letter-spacing: 0.3px; }
+
+        /* 班组标题 */
+        .group-title {
+            font-weight: 700;
+            color: var(--gold);
+            margin: 13px 0 8px 0;
+            font-size: 13px;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .group-title::before {
+            content: "";
+            width: 3px; height: 12px;
+            border-radius: 2px;
+            background: var(--gold);
+        }
+        .group-title:first-child { margin-top: 0; }
+
+        /* 汇总统计 */
+        .sub-stat {
+            margin-top: 13px;
+            padding: 11px 12px;
+            background: var(--bg2);
+            border: 1px dashed var(--border2);
+            border-radius: var(--radius-sm);
+            text-align: center;
+            color: var(--text-sub);
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .sub-stat b { color: var(--gold); }
+
+        /* 底部生成按钮 */
+        .gen-btn {
+            position: fixed;
+            bottom: 18px;
+            left: 16px;
+            right: 16px;
+            padding: 15px 0;
+            background: var(--red-grad);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(230,57,70,0.45);
+            transition: transform 0.12s;
+        }
+        .gen-btn:active { transform: scale(0.985); }
+
+        /* 弹窗 */
+        .modal-mask {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(4,8,12,0.72);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        @media (min-width: 600px) { .modal-mask { align-items: center; } }
+        .modal-mask.show { display: flex; }
+        .modal {
+            background: var(--card);
+            border: 1px solid var(--border2);
+            border-radius: 18px;
+            width: 100%;
+            max-width: 440px;
+            max-height: 82vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+        .modal-header {
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--border);
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .modal-body { flex: 1; overflow-y: auto; padding: 16px 18px; }
+        .modal-body textarea {
+            width: 100%;
+            height: 200px;
+            border: 1px solid var(--border2);
+            background: var(--bg2);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            font-size: 13px;
+            color: var(--text);
+            outline: none;
+            resize: none;
+            line-height: 1.7;
+        }
+        .modal-body textarea:focus { border-color: var(--red); }
+        .modal-body .hint {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        .modal-footer {
+            padding: 14px 18px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+        }
+        .modal-footer button {
+            flex: 1;
+            padding: 12px 0;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .btn-cancel { background: var(--bg2); color: var(--text-sub); border: 1px solid var(--border2) !important; }
+        .btn-confirm { background: var(--red-grad); color: #fff; box-shadow: 0 4px 12px rgba(230,57,70,0.35); }
+
+        /* 生成结果 */
+        .result-pre {
+            white-space: pre-wrap;
+            font-size: 13px;
+            line-height: 1.75;
+            color: var(--text);
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            font-family: "SF Mono", Menlo, Consolas, monospace;
+        }
+
+        /* toast */
+        .toast {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            background: rgba(18,26,36,0.95);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            padding: 12px 22px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.25s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+        /* 模板操作 */
+        .template-op { display: flex; gap: 8px; margin-top: 4px; }
+        .template-op select {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid var(--border2);
+            background: var(--bg2);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--text);
+            outline: none;
+        }
+        .template-op button {
+            padding: 10px 13px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-save { background: linear-gradient(135deg,#2ecc71,#27ae60); color: #fff; }
+        .btn-load { background: var(--red-grad); color: #fff; }
+        .btn-del { background: var(--bg2); color: #ff8a8a; border: 1px solid #5a3038 !important; }
+
+        .install-btn {
+            position: fixed;
+            top: 12px; right: 12px;
+            padding: 7px 12px;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 9px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: none;
+            z-index: 100;
+        }
+        .install-btn.show { display: block; }
+        .hidden { display: none !important; }
+        .share-btn {
+            margin-top: 10px;
+            padding: 8px 18px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            color: var(--gold);
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .share-btn:active { background: rgba(255,255,255,0.2); }
+        .lock-btn {
+            margin-top: 10px;
+            margin-left: 8px;
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            color: var(--text-dim);
+            font-size: 13px;
+            cursor: pointer;
+        }
+        body.locked .edit-btn { display: none !important; }
+    </style>
+</head>
+<body>
+    <button id="installBtn" class="install-btn">安装APP</button>
+
+    <div class="header">
+        <div class="logo">🚒</div>
+        <h1>消防出警信息生成器</h1>
+        <p>端州路消防救援站 · 快速出警信息生成工具</p>
+        <button class="share-btn" onclick="shareConfig()">📤 分享配置</button>
+        <button class="lock-btn" id="lockBtn" onclick="toggleLock()">🔒</button>
+    </div>
+
+    <div class="template-tab">
+        <div class="tab-item active" onclick="switchTemplate('disaster')">🔥 灾情模版</div>
+        <div class="tab-item" onclick="switchTemplate('outdoor')">🚗 外出模版</div>
+    </div>
+
+    <div class="container">
+        <!-- 警情选择 -->
+        <div class="card">
+            <div class="card-title"><span class="tt"><span class="ico">🚨</span>警情选择</span></div>
+            <div id="alarmList" class="alarm-select"></div>
+            <div id="alarmOpArea" class="alarm-op">
+                <input type="text" id="newAlarmInput" placeholder="输入新警情名称">
+                <button onclick="addAlarm()">新增</button>
+                <button class="danger" onclick="deleteAlarm()">删除</button>
+            </div>
+            <div id="locationRow" class="location-row" style="display:none">
+                <input type="text" id="locationInput" placeholder="输入活动地点，如：xxx医院、xxx学校">
+            </div>
+        </div>
+
+        <!-- 实时支队报告统计条 -->
+        <div class="station-bar" id="stationBar">端州路站出动0车0人<small>按当前勾选自动统计</small></div>
+
+        <!-- 干部信息 -->
+        <div class="card">
+            <div class="card-title"><span class="tt"><span class="ico">👔</span>干部信息</span></div>
+            <div class="form-row">
+                <div class="row-edit">
+                    <label>带队干部</label>
+                    <span class="edit-btn" onclick="openEditModal('leader')">✎ 编辑</span>
+                </div>
+                <select id="leaderSelect"></select>
+            </div>
+
+            <div id="waterOfficerRow" class="form-row">
+                <div class="row-edit">
+                    <label class="toggle-label"><input type="checkbox" id="waterToggle" checked onchange="onToggleChange()">供水干部</label>
+                    <span class="edit-btn" onclick="openEditModal('water')">✎ 编辑</span>
+                </div>
+                <select id="waterOfficerSelect" onchange="onOfficerChange()"></select>
+            </div>
+
+            <div id="liaisonRow" class="form-row">
+                <div class="row-edit">
+                    <label class="toggle-label"><input type="checkbox" id="liaisonToggle" checked onchange="onToggleChange()">警情联络员</label>
+                    <span class="edit-btn" onclick="openEditModal('liaison')">✎ 编辑</span>
+                </div>
+                <select id="liaisonSelect" onchange="onOfficerChange()"></select>
+            </div>
+        </div>
+
+        <!-- 通信员 -->
+        <div class="card">
+            <div class="card-title">
+                <span class="tt"><span class="ico">📡</span>通信员</span>
+                <span class="edit-btn" onclick="openEditModal('comm')">✎ 编辑名单</span>
+            </div>
+            <div class="op-row">
+                <button onclick="checkAll('comm')">全选</button>
+                <button onclick="uncheckAll('comm')">清空</button>
+                <button onclick="reverseCheck('comm')">反选</button>
+            </div>
+            <div id="commList" class="checkbox-group"></div>
+        </div>
+
+        <!-- 参战人员（班组分组，支持编辑） -->
+        <div class="card">
+            <div class="card-title">
+                <span class="tt"><span class="ico">🧯</span>参战人员</span>
+                <span class="edit-btn" onclick="openEditModal('fighter')">✎ 编辑名单</span>
+            </div>
+            <div class="op-row">
+                <button onclick="checkAll('fighter')">全选</button>
+                <button onclick="uncheckAll('fighter')">清空</button>
+                <button onclick="reverseCheck('fighter')">反选</button>
+            </div>
+            <div id="fighterWrap"></div>
+        </div>
+
+        <!-- 休假人员 -->
+        <div class="card">
+            <div class="card-title">
+                <span class="tt"><span class="ico">🌴</span>休假人员</span>
+                <span class="edit-btn" onclick="openEditModal('vacation')">✎ 编辑名单</span>
+            </div>
+            <div class="op-row">
+                <button onclick="checkAll('vacation')">全选</button>
+                <button onclick="uncheckAll('vacation')">清空</button>
+                <button onclick="reverseCheck('vacation')">反选</button>
+            </div>
+            <div id="vacationList" class="checkbox-group"></div>
+        </div>
+
+        <!-- 车辆 -->
+        <div class="card">
+            <div class="card-title">
+                <span class="tt"><span class="ico">🚒</span>车辆</span>
+                <span class="edit-btn" onclick="openEditModal('vehicle')">✎ 编辑名单</span>
+            </div>
+            <div class="two-col">
+                <div>
+                    <div class="col-label">出动车辆</div>
+                    <div id="dispatchList" class="checkbox-group"></div>
+                </div>
+                <div>
+                    <div class="col-label">剩余车辆</div>
+                    <div id="remainList" class="checkbox-group"></div>
+                </div>
+            </div>
+            <div class="sub-stat" id="subStatBar">
+                已选：通信员<b>0</b>人 参战<b>0</b>人 出动<b>0</b>车 剩余<b>0</b>车
+            </div>
+        </div>
+
+        <!-- 模板管理 -->
+        <div class="card">
+            <div class="card-title"><span class="tt"><span class="ico">📋</span>配置模板</span></div>
+            <div class="template-op">
+                <select id="templateSelect"></select>
+                <button class="btn-save" onclick="saveTemplate()">保存</button>
+                <button class="btn-load" onclick="loadTemplate()">加载</button>
+                <button class="btn-del" onclick="deleteTemplate()">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="gen-btn" onclick="generateText()">📋 一键生成并复制</button>
+
+    <!-- 编辑弹窗 -->
+    <div id="editModal" class="modal-mask">
+        <div class="modal">
+            <div class="modal-header" id="editModalTitle">编辑名单</div>
+            <div class="modal-body">
+                <div class="hint" id="editHint"></div>
+                <textarea id="editTextarea" placeholder="每行一个，直接粘贴即可"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeEditModal()">取消</button>
+                <button class="btn-confirm" onclick="saveEdit()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 结果弹窗 -->
+    <div id="resultModal" class="modal-mask">
+        <div class="modal">
+            <div class="modal-header">✅ 生成结果</div>
+            <div class="modal-body">
+                <pre id="resultText" class="result-pre"></pre>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeResultModal()">关闭</button>
+                <button class="btn-confirm" onclick="copyResult()">复制内容</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const STATION_NAME = "端州路站";
+        const DEFAULT_LISTS = {
+            disasterAlarmList: ["火灾扑救", "抢险救援", "社会救助"],
+            outdoorAlarmList: ["外出消杀", "安保", "防消联勤", "六熟悉", "双随机"],
+            leaderList: ["马轶铭18820523119", "曹世良13527055119", "吴智威18211414800"],
+            waterOfficerList: ["吴智威18211414800", "林冬龙13074483339", "徐文山15768680840", "邱志豪17300921043", "冯海涛18826423830", "刘赞林18319934684"],
+            liaisonList: ["龙仁浪19198364220", "陈炳光19075840853", "李富伟19129899119", "韦冠成17300795334", "陈锦龙13425284153", "陈政学17736682898", "梁裕桉18219540244"],
+            commList: ["龙仁浪19198364220", "陈炳光19075840853", "李富伟19129899119", "韦冠成17300795334", "陈锦龙13425284153"],
+            fighterGroup: {
+                "特勤班": ["林冬龙", "梁景添", "钱浩邦", "刘赞林", "何家威"],
+                "一班": ["徐文山", "彭威龙", "梁裕桉", "陈政学", "冯海涛"],
+                "二班": ["吴君豪", "温楚浩", "江羽"],
+                "三班": ["邱志豪", "谢铭辉", "陆文安", "黄力"],
+                "四班": ["陈炳光", "李富伟", "韦冠成", "陈煜之", "陈锦龙", "龙仁浪"]
+            },
+            vacationList: ["林冬龙", "梁景添", "钱浩邦", "刘赞林", "何家威", "徐文山", "彭威龙", "梁裕桉", "陈政学", "冯海涛", "吴君豪", "温楚浩", "江羽", "邱志豪", "谢铭辉", "陆文安", "黄力", "陈炳光", "李富伟", "韦冠成", "陈煜之", "陈锦龙", "龙仁浪"],
+            vehicleList: ["粤X7112应急（压缩空气泡沫消防车）", "粤X7042应急（泡沫水罐消防车）", "粤X7124应急（泡沫消防车）", "粤X7049应急（抢险救援消防车）"]
+        };
+
+        let currentTemplate = 'disaster';
+        let currentAlarm = '';
+        let editType = '';
+        let deferredPrompt = null;
+
+        // 数据存储
+        function saveData(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch(e) {
+                console.error('存储失败', e);
+            }
+        }
+        function loadData(key, defaultVal) {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : defaultVal;
+            } catch(e) {
+                return defaultVal;
+            }
+        }
+        function initData() {
+            // 优先从URL hash加载分享配置
+            if(location.hash && location.hash.length > 10) {
+                try {
+                    const decoded = JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(1)))));
+                    saveData('fire_list_data_v8', decoded);
+                    history.replaceState(null, '', location.pathname + location.search);
+                    return decoded;
+                } catch(e) { console.warn('分享链接解析失败', e); }
+            }
+            let data = loadData('fire_list_data_v8', null);
+            if (!data) {
+                data = JSON.parse(JSON.stringify(DEFAULT_LISTS));
+                saveData('fire_list_data_v8', data);
+            }
+            return data;
+        }
+        // 生成带配置的分享链接
+        function shareConfig() {
+            try {
+                const json = JSON.stringify(listData);
+                const b64 = btoa(unescape(encodeURIComponent(json)));
+                const url = location.origin + location.pathname + '#' + b64;
+                navigator.clipboard.writeText(url).then(() => {
+                    showToast('配置链接已复制，发给同事打开即可同步名单');
+                }).catch(() => {
+                    prompt('复制以下链接发给同事：', url);
+                });
+            } catch(e) {
+                showToast('生成失败：' + e.message);
+            }
+        }
+        // 编辑锁：默认锁定，只有输密码才能改
+        const EDIT_PASSWORD = "8888";
+        let unlocked = sessionStorage.getItem('fire_unlocked') === '1';
+        function applyLockState() {
+            document.body.classList.toggle('locked', !unlocked);
+            document.getElementById('lockBtn').textContent = unlocked ? '🔓' : '🔒';
+        }
+        function toggleLock() {
+            if(unlocked) {
+                unlocked = false;
+                sessionStorage.removeItem('fire_unlocked');
+            } else {
+                const pwd = prompt('请输入编辑密码：');
+                if(pwd === EDIT_PASSWORD) {
+                    unlocked = true;
+                    sessionStorage.setItem('fire_unlocked', '1');
+                    showToast('已解锁编辑权限');
+                } else if(pwd !== null) {
+                    showToast('密码错误');
+                }
+            }
+            applyLockState();
+        }
+        let listData = initData();
+
+        // 获取已勾选休假人员
+        function getVacationNames() {
+            const names = [];
+            document.querySelectorAll('#vacationList .checkbox-item.checked').forEach(el => {
+                names.push(el.dataset.name);
+            });
+            return names;
+        }
+        function isOnVacation(name) {
+            return getVacationNames().includes(name);
+        }
+
+        // 获取已勾选通信员名字
+        function getSelectedCommNames() {
+            const names = [];
+            document.querySelectorAll('#commList .checkbox-item.checked').forEach(el => {
+                names.push(el.dataset.name);
+            });
+            return names;
+        }
+        function isSelectedAsComm(name) {
+            return getSelectedCommNames().includes(name);
+        }
+
+        // 获取已勾选参战人员名字
+        function getSelectedFighterNames() {
+            const names = [];
+            document.querySelectorAll('#fighterWrap .checkbox-item.checked').forEach(el => {
+                names.push(el.dataset.name);
+            });
+            return names;
+        }
+        function isSelectedAsFighter(name) {
+            return getSelectedFighterNames().includes(name);
+        }
+
+        // 从下拉框值"姓名：手机号"提取姓名
+        function extractNameFromValue(val) {
+            if(!val) return "";
+            var m = val.match(/^[一-龥]+/);
+            return m ? m[0] : val;
+        }
+        function getSelectedLiaisonName() {
+            return extractNameFromValue(document.getElementById("liaisonSelect").value);
+        }
+        function getSelectedWaterName() {
+            return extractNameFromValue(document.getElementById("waterOfficerSelect").value);
+        }
+        function isSelectedAsLiaison(name) {
+            if(!isLiaisonActive()) return false;
+            return name === getSelectedLiaisonName();
+        }
+        function isSelectedAsWater(name) {
+            if(!isWaterActive()) return false;
+            return name === getSelectedWaterName();
+        }
+        // 联络员/供水干部切换时，刷新通信员和参战列表的禁用状态
+        function onOfficerChange() {
+            renderCommList();
+            renderFighterGroup();
+            updateStationStats();
+        }
+
+        // 供水干部/联络员是否启用（警情类型显示 + 勾选开关）
+        function isWaterActive() {
+            const row = document.getElementById("waterOfficerRow");
+            return row.style.display !== "none" && document.getElementById("waterToggle").checked;
+        }
+        function isLiaisonActive() {
+            const row = document.getElementById("liaisonRow");
+            return row.style.display !== "none" && document.getElementById("liaisonToggle").checked;
+        }
+        // 勾选开关变化时同步禁用态并刷新统计
+        function onToggleChange() {
+            document.getElementById("waterOfficerRow").classList.toggle("select-off", !document.getElementById("waterToggle").checked);
+            document.getElementById("liaisonRow").classList.toggle("select-off", !document.getElementById("liaisonToggle").checked);
+            renderCommList();
+            renderFighterGroup();
+            updateStationStats();
+        }
+
+        // 获取当前警情列表
+        function getCurrentAlarmList() {
+            return currentTemplate === 'disaster' ? listData.disasterAlarmList : listData.outdoorAlarmList;
+        }
+
+        // 切换模版
+        function switchTemplate(type) {
+            currentTemplate = type;
+            document.querySelectorAll('.tab-item').forEach((item, index) => {
+                item.classList.toggle('active',
+                    (type === 'disaster' && index === 0) ||
+                    (type === 'outdoor' && index === 1)
+                );
+            });
+            // 灾情模版隐藏新增删除
+            const opArea = document.getElementById('alarmOpArea');
+            opArea.style.display = type === 'disaster' ? 'none' : 'flex';
+            // 两个模版都显示地点输入框，文案不同
+            document.getElementById('locationRow').style.display = 'block';
+            document.getElementById('locationInput').placeholder = type === 'outdoor' 
+                ? '输入活动地点，如：xxx医院、xxx学校'
+                : '输入出动地点，如：端州区xxx街道xxx位置';
+
+            renderAlarmList();
+            toggleModulesByAlarm();
+            renderAllCheckList();
+            updateStationStats();
+        }
+
+        // 渲染警情列表
+        function renderAlarmList() {
+            const alarmList = getCurrentAlarmList();
+            const container = document.getElementById('alarmList');
+            container.innerHTML = '';
+            alarmList.forEach((alarm, index) => {
+                const item = document.createElement('div');
+                item.className = 'alarm-item' + (index === 0 ? ' active' : '');
+                item.textContent = alarm;
+                item.onclick = () => selectAlarm(index);
+                container.appendChild(item);
+            });
+            currentAlarm = alarmList[0] || '';
+            toggleModulesByAlarm();
+        }
+
+        // 选择警情
+        function selectAlarm(index) {
+            const alarmList = getCurrentAlarmList();
+            currentAlarm = alarmList[index];
+            document.querySelectorAll('.alarm-item').forEach((item, i) => {
+                item.classList.toggle('active', i === index);
+            });
+            toggleModulesByAlarm();
+            updateStationStats();
+        }
+
+        // 新增警情（灾情模版禁用）
+        function addAlarm() {
+            if (currentTemplate === 'disaster') return;
+            const input = document.getElementById('newAlarmInput');
+            const name = input.value.trim();
+            if (!name) { showToast('请输入警情名称'); return; }
+            const alarmList = getCurrentAlarmList();
+            if (alarmList.includes(name)) { showToast('警情已存在'); return; }
+            alarmList.push(name);
+            saveData('fire_list_data_v8', listData);
+            renderAlarmList();
+            input.value = '';
+        }
+
+        // 删除警情（灾情模版禁用）
+        function deleteAlarm() {
+            if (currentTemplate === 'disaster') return;
+            const alarmList = getCurrentAlarmList();
+            const idx = alarmList.indexOf(currentAlarm);
+            if(idx < 0) return;
+            alarmList.splice(idx, 1);
+            saveData('fire_list_data_v8', listData);
+            renderAlarmList();
+        }
+
+        // 根据警情控制模块显隐
+        function toggleModulesByAlarm() {
+            const waterRow = document.getElementById("waterOfficerRow");
+            const liaisonRow = document.getElementById("liaisonRow");
+            if(currentTemplate === "outdoor") {
+                waterRow.style.display = "none";
+                liaisonRow.style.display = "none";
+            } else {
+                if(currentAlarm === "火灾扑救") {
+                    waterRow.style.display = "block";
+                    liaisonRow.style.display = "block";
+                } else if(currentAlarm === "抢险救援" || currentAlarm === "社会救助") {
+                    waterRow.style.display = "none";
+                    liaisonRow.style.display = "block";
+                } else {
+                    waterRow.style.display = "none";
+                    liaisonRow.style.display = "none";
+                }
+            }
+        }
+
+        // 渲染通信员列表
+        function renderCommList() {
+            const wrap = document.getElementById("commList");
+            // 保存已选名字
+            const checkedNames = new Set();
+            wrap.querySelectorAll(".checkbox-item.checked").forEach(el => checkedNames.add(el.dataset.name));
+            wrap.innerHTML = "";
+            listData.commList.forEach(item => {
+                const m = item.match(/^[一-龥]+/);
+                const name = m ? m[0] : item;
+                const div = document.createElement("div");
+                div.className = "checkbox-item";
+                div.dataset.val = item;
+                div.dataset.name = name;
+                if(isOnVacation(name) || isSelectedAsFighter(name) || isSelectedAsLiaison(name) || isSelectedAsWater(name)) div.classList.add("disabled");
+                else if(checkedNames.has(name)) div.classList.add("checked");
+                div.innerHTML = `<input type="checkbox">${item}`;
+                div.onclick = function() {
+                    if(this.classList.contains("disabled")) return;
+                    this.classList.toggle("checked");
+                    renderFighterGroup();
+                    renderSelectOptions();
+                    updateStationStats();
+                }
+                wrap.appendChild(div);
+            })
+        }
+
+        // 渲染班组参战人员
+        function renderFighterGroup() {
+            const wrap = document.getElementById("fighterWrap");
+            // 保存已选名字
+            const checkedNames = new Set();
+            wrap.querySelectorAll(".checkbox-item.checked").forEach(el => checkedNames.add(el.dataset.name));
+            wrap.innerHTML = "";
+            const groups = listData.fighterGroup;
+            for(let gName in groups) {
+                const gDiv = document.createElement("div");
+                gDiv.innerHTML = `<div class="group-title">${gName}</div>`;
+                const groupWrap = document.createElement("div");
+                groupWrap.className = "checkbox-group";
+                groups[gName].forEach(person => {
+                    const div = document.createElement("div");
+                    div.className = "checkbox-item";
+                    div.dataset.name = person;
+                    const disabled = isOnVacation(person) || isSelectedAsComm(person) || isSelectedAsLiaison(person) || isSelectedAsWater(person);
+                    if(disabled) {
+                        div.classList.add("disabled");
+                    } else if(checkedNames.has(person)) {
+                        div.classList.add("checked");
+                    }
+                    div.innerHTML = `<input type="checkbox">${person}`;
+                    div.onclick = function() {
+                        if(this.classList.contains("disabled")) return;
+                        this.classList.toggle("checked");
+                        renderCommList();
+                        updateStationStats();
+                    }
+                    groupWrap.appendChild(div);
+                })
+                gDiv.appendChild(groupWrap);
+                wrap.appendChild(gDiv);
+            }
+        }
+
+        // 渲染休假人员列表
+        function renderVacationList() {
+            const wrap = document.getElementById("vacationList");
+            wrap.innerHTML = "";
+            listData.vacationList.forEach(name => {
+                const div = document.createElement("div");
+                div.className = "checkbox-item";
+                div.dataset.name = name;
+                div.innerHTML = `<input type="checkbox">${name}`;
+                div.onclick = function() {
+                    this.classList.toggle("checked");
+                    renderCommList();
+                    renderFighterGroup();
+                    renderSelectOptions();
+                    updateStationStats();
+                }
+                wrap.appendChild(div);
+            })
+        }
+
+        // 渲染车辆列表
+        function renderVehicleList() {
+            const dispatchWrap = document.getElementById("dispatchList");
+            const remainWrap = document.getElementById("remainList");
+            dispatchWrap.innerHTML = "";
+            remainWrap.innerHTML = "";
+            listData.vehicleList.forEach(v => {
+                const dItem = document.createElement("div");
+                dItem.className = "checkbox-item";
+                dItem.dataset.vehicle = v;
+                dItem.innerHTML = `<input type="checkbox">${v}`;
+                dItem.onclick = function() {
+                    const rItem = remainWrap.querySelector(`[data-vehicle="${v}"]`);
+                    if(this.classList.contains("checked")) {
+                        this.classList.remove("checked");
+                    } else {
+                        this.classList.add("checked");
+                        if(rItem) rItem.classList.remove("checked");
+                    }
+                    updateStationStats();
+                }
+                dispatchWrap.appendChild(dItem);
+
+                const rItem = document.createElement("div");
+                rItem.className = "checkbox-item";
+                rItem.dataset.vehicle = v;
+                rItem.innerHTML = `<input type="checkbox">${v}`;
+                rItem.onclick = function() {
+                    const dItem = dispatchWrap.querySelector(`[data-vehicle="${v}"]`);
+                    if(this.classList.contains("checked")) {
+                        this.classList.remove("checked");
+                    } else {
+                        this.classList.add("checked");
+                        if(dItem) dItem.classList.remove("checked");
+                    }
+                    updateStationStats();
+                }
+                remainWrap.appendChild(rItem);
+            })
+        }
+
+        // 批量渲染所有列表
+        function renderAllCheckList() {
+            renderCommList();
+            renderFighterGroup();
+            renderVacationList();
+            renderVehicleList();
+        }
+
+        // 全选/清空/反选
+        function checkAll(type) {
+            if(type === "comm") {
+                document.querySelectorAll("#commList .checkbox-item:not(.disabled)").forEach(x => x.classList.add("checked"));
+                renderFighterGroup();
+            } else if(type === "fighter") {
+                document.querySelectorAll("#fighterWrap .checkbox-item:not(.disabled)").forEach(x => x.classList.add("checked"));
+            } else if(type === "vacation") {
+                document.querySelectorAll("#vacationList .checkbox-item").forEach(x => x.classList.add("checked"));
+                renderCommList();
+                renderFighterGroup();
+            }
+            updateStationStats();
+        }
+        function uncheckAll(type) {
+            if(type === "comm") {
+                document.querySelectorAll("#commList .checkbox-item").forEach(x => x.classList.remove("checked"));
+                renderFighterGroup();
+            } else if(type === "fighter") {
+                document.querySelectorAll("#fighterWrap .checkbox-item").forEach(x => x.classList.remove("checked"));
+            } else if(type === "vacation") {
+                document.querySelectorAll("#vacationList .checkbox-item").forEach(x => x.classList.remove("checked"));
+                renderCommList();
+                renderFighterGroup();
+            }
+            updateStationStats();
+        }
+        function reverseCheck(type) {
+            if(type === "comm") {
+                document.querySelectorAll("#commList .checkbox-item:not(.disabled)").forEach(x => x.classList.toggle("checked"));
+                renderFighterGroup();
+            } else if(type === "fighter") {
+                document.querySelectorAll("#fighterWrap .checkbox-item:not(.disabled)").forEach(x => x.classList.toggle("checked"));
+            } else if(type === "vacation") {
+                document.querySelectorAll("#vacationList .checkbox-item").forEach(x => x.classList.toggle("checked"));
+                renderCommList();
+                renderFighterGroup();
+            }
+            updateStationStats();
+        }
+
+        // 实时统计
+        function updateStationStats() {
+            let leaderCnt = 1;
+            let waterCnt = isWaterActive() ? 1 : 0;
+            let liaisonCnt = isLiaisonActive() ? 1 : 0;
+
+            let commCnt = document.querySelectorAll("#commList .checkbox-item.checked").length;
+            let fighterCnt = document.querySelectorAll("#fighterWrap .checkbox-item.checked").length;
+            let carCnt = document.querySelectorAll("#dispatchList .checkbox-item.checked").length;
+            let remainCarCnt = document.querySelectorAll("#remainList .checkbox-item.checked").length;
+
+            let totalPerson = leaderCnt + waterCnt + liaisonCnt + commCnt + fighterCnt;
+            document.getElementById("stationBar").innerHTML = `${STATION_NAME}出动${carCnt}车${totalPerson}人<small>按当前勾选自动统计</small>`;
+            document.getElementById("subStatBar").innerHTML = `已选：通信员<b>${commCnt}</b>人 参战<b>${fighterCnt}</b>人 出动<b>${carCnt}</b>车 剩余<b>${remainCarCnt}</b>车`;
+        }
+
+        // 编辑弹窗
+        const EDIT_HINTS = {
+            vacation: "每行一个名字，保存后勾选即可休假。",
+            leader: "每行一个，格式：姓名：手机号",
+            water: "每行一个，格式：姓名：手机号",
+            liaison: "每行一个，格式：姓名：手机号",
+            comm: "每行一个，格式：姓名 手机号",
+            fighter: "班组名单独占一行，该组人员每行一个，班组之间空一行。",
+            vehicle: "每行一个车辆名称"
+        };
+        function openEditModal(type) {
+            editType = type;
+            const modal = document.getElementById("editModal");
+            const ta = document.getElementById("editTextarea");
+            const title = document.getElementById("editModalTitle");
+            const hint = document.getElementById("editHint");
+
+            const titles = {
+                vacation: "编辑休假名单",
+                leader: "编辑带队干部",
+                water: "编辑供水干部",
+                liaison: "编辑警情联络员",
+                comm: "编辑通信员名单",
+                fighter: "编辑参战人员（班组）",
+                vehicle: "编辑车辆名单"
+            };
+            title.innerText = titles[type] || "编辑名单";
+            hint.innerText = EDIT_HINTS[type] || "";
+
+            if(type === "vacation") {
+                ta.value = listData.vacationList.join("\n");
+            } else if(type === "leader") {
+                ta.value = listData.leaderList.join("\n");
+            } else if(type === "water") {
+                ta.value = listData.waterOfficerList.join("\n");
+            } else if(type === "liaison") {
+                ta.value = listData.liaisonList.join("\n");
+            } else if(type === "comm") {
+                ta.value = listData.commList.join("\n");
+            } else if(type === "fighter") {
+                let content = "";
+                const groups = listData.fighterGroup;
+                for(let gName in groups) {
+                    content += gName + "\n";
+                    content += groups[gName].join("\n") + "\n\n";
+                }
+                ta.value = content.trim();
+            } else if(type === "vehicle") {
+                ta.value = listData.vehicleList.join("\n");
+            }
+            modal.classList.add("show");
+        }
+        function closeEditModal() {
+            document.getElementById("editModal").classList.remove("show");
+        }
+        function saveEdit() {
+            const ta = document.getElementById("editTextarea");
+            const arr = ta.value.split("\n").map(x => x.trim()).filter(x => x);
+
+            if(editType === "vacation") {
+                listData.vacationList = arr;
+            } else if(editType === "leader") {
+                listData.leaderList = arr;
+            } else if(editType === "water") {
+                listData.waterOfficerList = arr;
+            } else if(editType === "liaison") {
+                listData.liaisonList = arr;
+            } else if(editType === "comm") {
+                listData.commList = arr;
+            } else if(editType === "fighter") {
+                const groups = {};
+                const blocks = ta.value.split(/\n\s*\n/).map(b => b.trim()).filter(b => b);
+                blocks.forEach(block => {
+                    const lines = block.split("\n").map(l => l.trim()).filter(l => l);
+                    if(lines.length > 0) {
+                        const groupName = lines[0];
+                        const persons = lines.slice(1);
+                        groups[groupName] = persons;
+                    }
+                });
+                listData.fighterGroup = groups;
+            } else if(editType === "vehicle") {
+                listData.vehicleList = arr;
+            }
+
+            saveData("fire_list_data_v8", listData);
+            closeEditModal();
+            renderAllCheckList();
+            renderSelectOptions();
+            updateStationStats();
+            showToast("保存成功");
+        }
+
+        // 渲染下拉选项
+        function renderSelectOptions() {
+            // 从"姓名：手机号"条目里提取姓名（分隔符兼容中英文冒号）
+            const extractName = (item) => {
+                const m = item.match(/^[一-龥]+/);
+                return m ? m[0] : item;
+            };
+
+            const leaderSel = document.getElementById("leaderSelect");
+            leaderSel.innerHTML = "";
+            listData.leaderList.forEach(item => {
+                const opt = document.createElement("option");
+                opt.value = item; opt.innerText = item;
+                leaderSel.appendChild(opt);
+            })
+
+            const waterSel = document.getElementById("waterOfficerSelect");
+            const savedWater = waterSel.value;
+            waterSel.innerHTML = "";
+            listData.waterOfficerList.forEach(item => {
+                const opt = document.createElement("option");
+                opt.value = item; opt.innerText = item;
+                if(isOnVacation(extractName(item)) || isSelectedAsComm(extractName(item))) opt.disabled = true;
+                waterSel.appendChild(opt);
+            })
+            waterSel.value = savedWater;
+
+            const liaisonSel = document.getElementById("liaisonSelect");
+            const savedLiaison = liaisonSel.value;
+            liaisonSel.innerHTML = "";
+            listData.liaisonList.forEach(item => {
+                const opt = document.createElement("option");
+                opt.value = item; opt.innerText = item;
+                if(isOnVacation(extractName(item)) || isSelectedAsComm(extractName(item))) opt.disabled = true;
+                liaisonSel.appendChild(opt);
+            })
+            liaisonSel.value = savedLiaison;
+        }
+
+        // 生成报文
+        function generateText() {
+            let output = "";
+            let leaderCnt = 1;
+            let waterCnt = isWaterActive() ? 1 : 0;
+            let liaisonCnt = isLiaisonActive() ? 1 : 0;
+
+            let commSel = document.querySelectorAll("#commList .checkbox-item.checked");
+            let fighterSel = document.querySelectorAll("#fighterWrap .checkbox-item.checked");
+            let dispatchSel = document.querySelectorAll("#dispatchList .checkbox-item.checked");
+            let remainSel = document.querySelectorAll("#remainList .checkbox-item.checked");
+            let carCnt = dispatchSel.length;
+            let commCnt = commSel.length;
+            let fighterCnt = fighterSel.length;
+            let totalPerson = leaderCnt + waterCnt + liaisonCnt + commCnt + fighterCnt;
+
+            const commArr = [];
+            commSel.forEach(x => commArr.push(x.dataset.val));
+            const fighterArr = [];
+            fighterSel.forEach(x => fighterArr.push(x.dataset.name));
+            const dispatchArr = [];
+            dispatchSel.forEach(x => dispatchArr.push(x.dataset.vehicle));
+            const remainArr = [];
+            remainSel.forEach(x => remainArr.push(x.dataset.vehicle));
+
+            // 计算剩余力量（不算休假的）
+            let totalFighter = 0;
+            for(let g in listData.fighterGroup) {
+                totalFighter += listData.fighterGroup[g].length;
+            }
+            let totalStationPeople = listData.leaderList.length + totalFighter;
+            let vacationCnt = document.querySelectorAll("#vacationList .checkbox-item.checked").length;
+            let remainPeople = totalStationPeople - totalPerson - vacationCnt;
+            let remainCarCnt = remainSel.length;
+
+            if(currentTemplate === 'outdoor') {
+                // 外出模版格式
+                output += `${currentAlarm}\n`;
+                const loc = document.getElementById("locationInput").value.trim();
+                output += `活动地点：${loc || "xxx"}\n`;
+                output += `报告支队：${STATION_NAME}出动${carCnt}车${totalPerson}人\n`;
+                output += `带队干部：${document.getElementById("leaderSelect").value}\n`;
+                if(commArr.length > 0) output += `通信员：${commArr.join("、")}\n`;
+                if(fighterArr.length > 0) output += `人员名单：${fighterArr.join("、")}\n`;
+                if(dispatchArr.length > 0) output += `出动车辆：${dispatchArr.join("、")}\n`;
+                output += `队站剩余力量：\n`;
+                if(remainArr.length > 0) {
+                    remainArr.forEach(x => output += `${x}\n`);
+                } else {
+                    output += `无\n`;
+                }
+            } else {
+                // 灾情模版格式
+                const loc = document.getElementById("locationInput").value.trim();
+                output += `出动名称：${currentAlarm}\n`;
+                output += `出动地点：${loc || "xxx"}\n`;
+                output += `出动力量：${STATION_NAME}出动${carCnt}车${totalPerson}人\n`;
+                output += `带队干部：${document.getElementById("leaderSelect").value}\n`;
+                if(isWaterActive()) {
+                    output += `供水干部：${document.getElementById("waterOfficerSelect").value}\n`;
+                }
+                if(isLiaisonActive()) {
+                    output += `警情联络员：${document.getElementById("liaisonSelect").value}\n`;
+                }
+                if(commArr.length > 0) output += `通信员：${commArr.join("、")}\n`;
+                if(fighterArr.length > 0) output += `人员名单：${fighterArr.join("、")}\n`;
+                output += `出动车辆：\n`;
+                dispatchArr.forEach(x => output += `${x}\n`);
+                output += `队站剩余力量：${remainCarCnt}车${remainPeople}人\n`;
+                if(remainArr.length > 0) {
+                    remainArr.forEach(x => output += `${x}\n`);
+                } else {
+                    output += `无\n`;
+                }
+            }
+
+            document.getElementById("resultText").innerText = output;
+            document.getElementById("resultModal").classList.add("show");
+        }
+        function closeResultModal() {
+            document.getElementById("resultModal").classList.remove("show");
+        }
+        function copyResult() {
+            const txt = document.getElementById("resultText").innerText;
+            navigator.clipboard.writeText(txt).then(() => {
+                showToast("复制成功");
+            }).catch(() => {
+                const ta = document.createElement("textarea");
+                ta.value = txt;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand("copy");
+                ta.remove();
+                showToast("复制成功");
+            })
+        }
+
+        // 模板管理
+        function getTemplateList() {
+            return JSON.parse(localStorage.getItem("fire_template_list_v2") || "[]");
+        }
+        function saveTemplateList(list) {
+            localStorage.setItem("fire_template_list_v2", JSON.stringify(list));
+        }
+        function refreshTemplateSelect() {
+            const sel = document.getElementById("templateSelect");
+            sel.innerHTML = "";
+            const list = getTemplateList();
+            list.forEach((t, idx) => {
+                const opt = document.createElement("option");
+                opt.value = idx;
+                opt.innerText = t.name;
+                sel.appendChild(opt);
+            })
+        }
+        function saveTemplate() {
+            let tName = prompt("输入模板名称：");
+            if(!tName) return;
+            const list = getTemplateList();
+            const tData = {
+                name: tName,
+                template: currentTemplate,
+                alarm: currentAlarm,
+                leader: document.getElementById("leaderSelect").value,
+                water: document.getElementById("waterOfficerSelect").value,
+                liaison: document.getElementById("liaisonSelect").value,
+            }
+            list.push(tData);
+            saveTemplateList(list);
+            refreshTemplateSelect();
+            showToast("模板保存成功");
+        }
+        function loadTemplate() {
+            const sel = document.getElementById("templateSelect");
+            const idx = sel.value;
+            const list = getTemplateList();
+            if(!list[idx]) return;
+            const t = list[idx];
+            switchTemplate(t.template);
+            const alarmList = getCurrentAlarmList();
+            const aid = alarmList.indexOf(t.alarm);
+            if(aid >= 0) selectAlarm(aid);
+            document.getElementById("leaderSelect").value = t.leader;
+            document.getElementById("waterOfficerSelect").value = t.water;
+            document.getElementById("liaisonSelect").value = t.liaison;
+            showToast("模板加载完成");
+        }
+        function deleteTemplate() {
+            const sel = document.getElementById("templateSelect");
+            const idx = sel.value;
+            const list = getTemplateList();
+            if(!list[idx]) return;
+            list.splice(idx, 1);
+            saveTemplateList(list);
+            refreshTemplateSelect();
+            showToast("模板已删除");
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById("toast");
+            t.innerText = msg;
+            t.classList.add("show");
+            setTimeout(() => t.classList.remove("show"), 1500);
+        }
+
+        // PWA安装
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById("installBtn").classList.add("show");
+        });
+        document.getElementById("installBtn").onclick = async () => {
+            if (!deferredPrompt) {
+                showToast("请在Safari分享-添加到主屏幕");
+                return;
+            }
+            deferredPrompt.prompt();
+            deferredPrompt = null;
+        }
+
+        // 初始化
+        function init() {
+            applyLockState();
+            document.getElementById("alarmOpArea").style.display = "none";
+            // 默认灾情模版，显示地点输入框
+            document.getElementById("locationRow").style.display = "block";
+            document.getElementById("locationInput").placeholder = "输入出动地点，如：端州区xxx街道xxx位置";
+            renderAlarmList();
+            renderSelectOptions();
+            renderAllCheckList();
+            refreshTemplateSelect();
+            toggleModulesByAlarm();
+            updateStationStats();
+        }
+        init();
+    </script>
+    <script>
+        // PWA离线缓存
+        if('serviceWorker' in navigator && location.protocol === 'https:') {
+            const swCode = `
+                const CACHE = 'fire-v7';
+                self.addEventListener('install', e => { self.skipWaiting(); });
+                self.addEventListener('activate', e => { e.waitUntil(self.clients.claim()); });
+                self.addEventListener('fetch', e => {
+                    e.respondWith(
+                        caches.open(CACHE).then(cache =>
+                            fetch(e.request).then(resp => {
+                                cache.put(e.request, resp.clone());
+                                return resp;
+                            }).catch(() => cache.match(e.request))
+                        )
+                    );
+                });
+            `;
+            const swBlob = new Blob([swCode], {type:'text/javascript'});
+            navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
+        }
+    </script>
+</body>
+</html>
